@@ -1,0 +1,15 @@
+{
+  "name": "kyusei-kigaku",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "九星気学 占いアプリ（個人用・クライアントサイド完結・GitHub Pages公開）",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "serve": "python3 -m http.server 8080"
+  },
+  "devDependencies": {
+    "vitest": "^2.1.0"
+  }
+}
