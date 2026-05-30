@@ -108,6 +108,19 @@ export const HOME_STAR_BY_DIR = {
   nw: 6,
 };
 
+// 方位 → 後天定位の宮名（傾斜診断の表示に使用。仕様メモ§1）。
+export const PALACE_NAMES = {
+  center: '中宮',
+  n: '坎宮',
+  ne: '艮宮',
+  e: '震宮',
+  se: '巽宮',
+  s: '離宮',
+  sw: '坤宮',
+  w: '兌宮',
+  nw: '乾宮',
+};
+
 // 九星 → 後天定位の方位（HOME_STAR_BY_DIR の逆引き）
 export const HOME_DIR_BY_STAR = {
   1: 'n',

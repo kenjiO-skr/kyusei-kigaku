@@ -1,0 +1,175 @@
+/* styles.css — ふんわりピンク×クリームのかわいいテーマ。
+   判定色は配色規約に固定：吉=緑系／凶殺=赤系／その他(小凶・中立)=グレー系／本命星=紫系。 */
+
+:root {
+  --bg: #fff7fa; /* 生成りピンク */
+  --main: #f7a8c4; /* ふんわりピンク */
+  --main-deep: #ec85aa;
+  --sub: #fce3ec; /* 淡ピンク */
+  --card: #ffffff;
+  --ink: #5b4a52; /* やさしい墨 */
+  --ink-soft: #9a8b92;
+
+  /* 判定（規約固定） */
+  --good: #3fa372; /* 吉=緑 */
+  --good-bg: #e3f5ec;
+  --bad: #d9536b; /* 凶=赤 */
+  --bad-bg: #fbe2e7;
+  --neutral: #9a8f95; /* 小凶・中立=グレー */
+  --neutral-bg: #efeaec;
+  --honmei: #9b7fd4; /* 本命星=紫 */
+  --honmei-bg: #efe8fa;
+
+  --radius: 20px;
+  --radius-sm: 12px;
+  --shadow: 0 6px 18px rgba(236, 133, 170, 0.18);
+  --tab-h: 64px;
+  font-family: "Hiragino Maru Gothic ProN", "Hiragino Kaku Gothic ProN", "Yu Gothic", system-ui, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  -webkit-text-size-adjust: 100%;
+  line-height: 1.7;
+}
+
+.app {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 16px 16px calc(var(--tab-h) + 28px);
+  min-height: 100vh;
+}
+
+/* ヘッダー */
+.head { text-align: center; padding: 8px 0 14px; }
+.head__title { font-size: 1.3rem; font-weight: 700; color: var(--main-deep); margin: 0; letter-spacing: 0.04em; }
+.head__title::before { content: "❀ "; }
+.head__title::after { content: " ❀"; }
+.head__date { font-size: 0.8rem; color: var(--ink-soft); margin: 4px 0 0; }
+
+/* カード */
+.card {
+  background: var(--card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 18px;
+  margin: 14px 0;
+}
+.card__title { font-size: 1rem; font-weight: 700; margin: 0 0 12px; color: var(--main-deep); }
+.card__title::before { content: "♡ "; font-size: 0.85em; }
+
+/* 本命星バッジ（紫系・規約固定） */
+.badge-honmei {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--honmei-bg); color: var(--honmei);
+  border: 1.5px solid var(--honmei);
+  border-radius: 999px; padding: 6px 14px; font-weight: 700;
+}
+.badge-honmei__star { font-size: 1.15rem; }
+
+/* 判定バッジ */
+.verdict { display: inline-block; border-radius: 999px; padding: 2px 12px; font-size: 0.85rem; font-weight: 700; }
+.v-good { background: var(--good-bg); color: var(--good); }
+.v-bad { background: var(--bad-bg); color: var(--bad); }
+.v-neutral { background: var(--neutral-bg); color: var(--neutral); }
+
+/* 運勢・行 */
+.row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 7px 0; }
+.row + .row { border-top: 1px dashed var(--sub); }
+.row__dir { font-weight: 700; min-width: 3.2em; }
+.tendency { background: var(--sub); border-radius: var(--radius-sm); padding: 12px 14px; margin: 10px 0 0; }
+.muted { color: var(--ink-soft); font-size: 0.85rem; }
+
+/* 期間トグル・向きトグル */
+.toggle { display: inline-flex; background: var(--sub); border-radius: 999px; padding: 4px; gap: 2px; }
+.toggle button {
+  border: 0; background: transparent; color: var(--ink-soft);
+  padding: 6px 16px; border-radius: 999px; font-weight: 700; cursor: pointer; font-size: 0.9rem;
+}
+.toggle button[aria-pressed="true"] { background: var(--main); color: #fff; box-shadow: 0 2px 6px rgba(236,133,170,0.4); }
+.toolbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 6px; }
+
+/* 3×3 方位盤 */
+.board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 12px 0 4px; }
+.cell {
+  position: relative; aspect-ratio: 1 / 1; border-radius: var(--radius-sm);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 4px; text-align: center; background: var(--card); border: 2px solid var(--sub);
+}
+.cell--good { background: var(--good-bg); border-color: var(--good); }
+.cell--bad { background: var(--bad-bg); border-color: var(--bad); }
+.cell--neutral { background: var(--neutral-bg); border-color: var(--neutral); }
+.cell--center { background: var(--sub); border-style: dashed; border-color: var(--main); }
+.cell--honmei { box-shadow: 0 0 0 3px var(--honmei) inset; }
+.cell__dir { font-size: 0.68rem; color: var(--ink-soft); }
+.cell__star { font-size: 0.82rem; font-weight: 700; margin: 1px 0; }
+.cell__verdict { font-size: 0.68rem; font-weight: 700; }
+.cell__kill { font-size: 0.6rem; line-height: 1.25; }
+.cell__honmei-tag { position: absolute; top: 3px; right: 4px; font-size: 0.6rem; color: var(--honmei); font-weight: 700; }
+.compass { text-align: center; font-size: 0.75rem; color: var(--ink-soft); margin: 2px 0 8px; }
+
+/* 凡例 */
+.legend { display: flex; flex-wrap: wrap; gap: 8px; font-size: 0.72rem; color: var(--ink-soft); }
+.legend span::before { content: "■ "; }
+.legend .lg-good::before { color: var(--good); }
+.legend .lg-bad::before { color: var(--bad); }
+.legend .lg-neutral::before { color: var(--neutral); }
+.legend .lg-honmei::before { color: var(--honmei); }
+
+/* 用語（点線下線＋タップで吹き出し） */
+.term { border-bottom: 1.5px dotted var(--main-deep); cursor: help; }
+.tooltip {
+  position: fixed; left: 50%; bottom: calc(var(--tab-h) + 16px); transform: translateX(-50%);
+  width: min(86vw, 420px); background: #fff; color: var(--ink);
+  border: 2px solid var(--main); border-radius: var(--radius-sm);
+  box-shadow: var(--shadow); padding: 14px 16px; z-index: 50;
+}
+.tooltip__close { position: absolute; top: 6px; right: 8px; border: 0; background: transparent; font-size: 1.1rem; color: var(--ink-soft); cursor: pointer; }
+.tooltip__term { color: var(--main-deep); }
+.tooltip__desc { margin: 6px 0 0; font-size: 0.9rem; }
+
+/* フォーム */
+.field { margin: 12px 0; }
+.field label { display: block; font-weight: 700; font-size: 0.9rem; margin-bottom: 6px; }
+.field input[type="date"], .field select {
+  width: 100%; padding: 12px; border: 2px solid var(--sub); border-radius: var(--radius-sm);
+  font-size: 1rem; color: var(--ink); background: #fff; font-family: inherit;
+}
+.seg { display: inline-flex; gap: 8px; }
+.seg label { display: inline-flex; align-items: center; gap: 4px; font-weight: 600; }
+.btn {
+  width: 100%; border: 0; background: var(--main); color: #fff; font-weight: 700;
+  padding: 14px; border-radius: 999px; font-size: 1rem; cursor: pointer; box-shadow: var(--shadow);
+  font-family: inherit;
+}
+.btn:active { transform: translateY(1px); }
+.btn--sub { background: var(--sub); color: var(--main-deep); box-shadow: none; }
+
+/* 診断結果 */
+.diag { text-align: center; }
+.diag__main { font-size: 2rem; font-weight: 700; color: var(--honmei); margin: 8px 0; }
+.kv { display: flex; justify-content: space-between; padding: 9px 0; border-top: 1px dashed var(--sub); }
+.kv__k { color: var(--ink-soft); }
+.kv__v { font-weight: 700; }
+
+/* 下タブ */
+.tabbar {
+  position: fixed; left: 0; right: 0; bottom: 0; height: var(--tab-h);
+  background: #fff; border-top: 1px solid var(--sub);
+  display: flex; padding-bottom: env(safe-area-inset-bottom);
+  box-shadow: 0 -4px 16px rgba(236,133,170,0.12);
+}
+.tabbar button {
+  flex: 1; border: 0; background: transparent; color: var(--ink-soft);
+  font-size: 0.72rem; font-weight: 700; cursor: pointer; padding: 8px 2px;
+  display: flex; flex-direction: column; align-items: center; gap: 3px; font-family: inherit;
+}
+.tabbar button .ico { font-size: 1.3rem; line-height: 1; }
+.tabbar button[aria-pressed="true"] { color: var(--main-deep); }
+
+.foot { text-align: center; font-size: 0.72rem; color: var(--ink-soft); margin: 18px 0 4px; }
+.empty { text-align: center; color: var(--ink-soft); padding: 28px 10px; }
