@@ -49,7 +49,7 @@ export function boardModel(date, honmei, period) {
       ton = db.ton;
       branch = sexagenaryDayIndex(date) % 12;
       breakName = '日破';
-      label = '今日（日盤）';
+      label = `${date.getMonth() + 1}月${date.getDate()}日（日盤）`;
     }
     const board = placeStars(center);
     const judged = judgeDirections(board, branch, honmei, breakName);

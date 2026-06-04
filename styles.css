@@ -93,6 +93,18 @@ body {
 .toggle button[aria-pressed="true"] { background: var(--main); color: #fff; box-shadow: 0 2px 6px rgba(236,133,170,0.4); }
 .toolbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 6px; }
 
+/* 対象日ピッカー（運勢・方位） */
+.date-pick { display: inline-flex; align-items: center; gap: 8px; }
+.date-pick input[type="date"] {
+  padding: 8px 12px; border: 2px solid var(--sub); border-radius: var(--radius-sm);
+  font-size: 0.9rem; color: var(--ink); background: #fff; font-family: inherit;
+}
+.date-pick button {
+  border: 0; background: var(--sub); color: var(--ink-soft);
+  padding: 8px 16px; border-radius: 999px; font-weight: 700; cursor: pointer; font-size: 0.85rem;
+}
+.date-pick button:disabled { opacity: 0.5; cursor: default; }
+
 /* 3×3 方位盤 */
 .board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 12px 0 4px; }
 .cell {
