@@ -2,7 +2,15 @@
 // 本命星が中宮 → 八方塞がり（守りの時期）。各宮 → 宮ごとの象意。自分用は二黒の回座位置のみで足りる。
 // 象意は占術理論（検証可能な事実ではない）。簡潔・断定を避けた傾向表現にとどめる。
 import { dirOfStar } from './board.js';
-import { DIR_NAMES, PALACE_NAMES } from './constants.js';
+import {
+  DIR_NAMES,
+  PALACE_NAMES,
+  STAR_ELEMENT,
+  ELEMENT_NAMES,
+  STAR_NAMES,
+  HOME_STAR_BY_DIR,
+} from './constants.js';
+import { elementRelation } from './compatibility.js';
 
 // 方位（回座先）→ 運気の傾向（短い象意）。中宮は八方塞がり。
 const FORTUNE_TENDENCY = {
@@ -28,5 +36,114 @@ export function fortuneOf(honmei, board) {
     dirName: DIR_NAMES[dir],
     palace: PALACE_NAMES[dir],
     tendency: FORTUNE_TENDENCY[dir],
+  };
+}
+
+// === 運勢多層化（本命/月命/傾斜/五行・同会） ==========================
+// 中庸B：本命=主／月命=補助線／傾斜=色付け／五行=質。いずれも補助的解釈で流派差あり。
+// 比率合成はせず定性併記する（割れは明示し単一判定を出さない）。
+
+// 五行関係 → 運気の向き（定性）。
+const POLARITY = { 比和: '上向き', 生気: '上向き', 退気: '横ばい', 殺気: '下向き', 死気: '下向き' };
+
+// 五行関係 → 同会の質（断定を避けた傾向表現）。
+const ELEMENT_QUALITY = {
+  比和: '同じ気が重なり、地に足がついて安定しやすい時期とされる。',
+  生気: '気を分けてもらい、後押しや助けを受けやすい時期とされる。',
+  退気: '気が外へ漏れやすく、出すより守り・充電に向く時期とされる。',
+  殺気: '抑えを受けやすく、無理押しを避けて様子を見たい時期とされる。',
+  死気: 'こちらが気を使い消耗しやすく、欲張らず整える時期とされる。',
+};
+
+// 本命が中宮（八方塞がり）のとき：同会は取らない。
+const ELEMENT_QUALITY_CLOSED = '八方塞がりのため同会は取らず、新規より守り・充電に向く時期とされる。';
+
+// 月命星が中宮に回座したときの傾向。
+const GETSUMEI_CENTER = '内面の星が中心に集まり、外より内側の充実・足元固めに向く時期とされる。';
+
+// 傾斜（生まれ持った宮）→ 性質の色付け。
+const KEISHA_LENS = {
+  n: '水の宮（坎）。内省的で粘り強く、静かに底力を出すタイプとされる。',
+  ne: '山の宮（艮）。変化・節目に強く、転換期にこそ力を発揮するタイプとされる。',
+  e: '雷の宮（震）。行動的で発信力があり、勢いで動くタイプとされる。',
+  se: '風の宮（巽）。人との縁・調整を大切にし、信用を積んで進むタイプとされる。',
+  s: '火の宮（離）。情熱的で表現力があり、明暗がはっきり出やすいタイプとされる。',
+  sw: '地の宮（坤）。受容的で堅実、地道に積み上げるタイプとされる。',
+  w: '沢の宮（兌）。社交的で楽しみ上手、言葉で場を和ませるタイプとされる。',
+  nw: '天の宮（乾）。主導的で責任感が強く、決断で人を導くタイプとされる。',
+};
+
+// 本命と月命で向きが分かれたときの注記。
+const DIVERGENCE_NOTE =
+  '本命（表の運気）と月命（内面・家庭の運気）で向きが分かれています。外向きの動きと内側の整えを切り分けると読み違えにくいとされます。';
+
+// 多層運勢を返す。honmei,getsumei: 1..9 ／ keisha: keishaPalace の戻り（null 可）／ board: placeStars の結果。
+//   { basePolarity, getsumei, keishaLens, element, divergence }
+export function fortuneLayers(honmei, getsumei, keisha, board) {
+  const dir = dirOfStar(board, honmei);
+
+  // 五行（本命の同会）。本命が中宮なら同会は取らず守り。
+  let element;
+  let basePolarity;
+  const honmeiElement = ELEMENT_NAMES[STAR_ELEMENT[honmei]];
+  if (dir === 'center') {
+    element = {
+      honmeiElement,
+      doukaiStar: null,
+      doukaiStarName: null,
+      doukaiElement: null,
+      relation: null,
+      quality: ELEMENT_QUALITY_CLOSED,
+    };
+    basePolarity = '守り';
+  } else {
+    const doukaiStar = HOME_STAR_BY_DIR[dir];
+    const relation = elementRelation(STAR_ELEMENT[honmei], STAR_ELEMENT[doukaiStar]);
+    element = {
+      honmeiElement,
+      doukaiStar,
+      doukaiStarName: STAR_NAMES[doukaiStar],
+      doukaiElement: ELEMENT_NAMES[STAR_ELEMENT[doukaiStar]],
+      relation,
+      quality: ELEMENT_QUALITY[relation],
+    };
+    basePolarity = POLARITY[relation];
+  }
+
+  // 月命層。
+  const gdir = dirOfStar(board, getsumei);
+  const isCenter = gdir === 'center';
+  const tendency = isCenter ? GETSUMEI_CENTER : FORTUNE_TENDENCY[gdir];
+  const polarity = isCenter
+    ? '守り'
+    : POLARITY[elementRelation(STAR_ELEMENT[getsumei], STAR_ELEMENT[HOME_STAR_BY_DIR[gdir]])];
+  const getsumeiLayer = {
+    star: getsumei,
+    starName: STAR_NAMES[getsumei],
+    dir: gdir,
+    isCenter,
+    dirName: DIR_NAMES[gdir],
+    palace: PALACE_NAMES[gdir],
+    tendency,
+    polarity,
+  };
+
+  // 傾斜（色付け）。
+  const keishaLens = keisha
+    ? { palace: keisha.palace, starName: keisha.starName, note: KEISHA_LENS[keisha.dir] }
+    : null;
+
+  // 割れ判定（上向きと下向きが本命・月命で分かれたとき）。
+  const isSplit =
+    (basePolarity === '上向き' && getsumeiLayer.polarity === '下向き') ||
+    (basePolarity === '下向き' && getsumeiLayer.polarity === '上向き');
+  const divergence = { isSplit, note: isSplit ? DIVERGENCE_NOTE : null };
+
+  return {
+    basePolarity,
+    getsumei: getsumeiLayer,
+    keishaLens,
+    element,
+    divergence,
   };
 }

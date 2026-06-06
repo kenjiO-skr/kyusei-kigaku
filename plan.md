@@ -49,3 +49,10 @@
 - [x] GitHub Pages 有効化（main/root）→ 本番URLで開通確認（index/manifest/sw/app.js/icon すべて200、SW scope=サブパス）
 - [x] §8 完成の定義：1-4・7-8 を自動テスト＋本番確認で充足。5-6 のスマホ実機ホーム追加のみユーザー最終確認推奨
 - 公開URL: https://kenjio-skr.github.io/kyusei-kigaku/
+
+## Phase 8 運勢の多層化（本命/月命/傾斜/五行・同会）
+- [x] 設計提案＋論点①②③をユーザー確定（①定性併記 ②併記・非合成 ③中庸B）→ ADR-002 に記録
+- [x] fortune.js: fortuneLayers 追加（fortuneOf は不変・再利用）。同会＝本命回座宮の定位星との五行
+- [x] engine.boardModel(…, birth) で birth 指定時のみ fortune.layers 付与（後方互換）／app.js screenToday に多層表示＋流派差注記
+- [x] glossary に「同会」追加／tests/fortune.test.js に多層検証3ケース追加（既存2件は不変）
+- [x] vitest 全緑（72件）。direction/§5/§2・吉方位/相性/診断は無改変。SW キャッシュ v3 へバンプ
