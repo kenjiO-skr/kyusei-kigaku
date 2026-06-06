@@ -73,11 +73,34 @@ function targetDate() {
   return parseDateInput(state.targetDate) || new Date();
 }
 
+// 運勢の多層ブロック（月命・傾斜・五行＝補助的解釈）。layers が無ければ空文字。
+function layersBlock(layers) {
+  if (!layers) return '';
+  const { element, getsumei, keishaLens, divergence } = layers;
+  const rows = [];
+  if (element.relation) {
+    rows.push(`<p>${term('同会')}（${element.relation}）：${element.quality}</p>`);
+  } else {
+    rows.push(`<p>${term('同会')}：${element.quality}</p>`);
+  }
+  rows.push(`<p>${term('月命星')}：${getsumei.starName}が${getsumei.palace}に回座／${getsumei.tendency}</p>`);
+  if (keishaLens) {
+    rows.push(`<p>${term('傾斜')}：${keishaLens.note}</p>`);
+  }
+  if (divergence.isSplit) {
+    rows.push(`<p class="muted">${divergence.note}</p>`);
+  }
+  rows.push(`<p class="muted">※${term('月命星')}・${term('傾斜')}・${term('同会')}は補助的な読みで、流派により扱いが分かれます。</p>`);
+  return `<div class="layers">${rows.join('')}</div>`;
+}
+
 // ---- 画面：今日（運勢） ----
 function screenToday() {
   const honmei = effectiveHonmei();
   if (honmei == null) return needProfile();
-  const m = boardModel(targetDate(), honmei, state.period);
+  const p = state.profile;
+  const birth = p.birthDate ? { date: parseDateInput(p.birthDate), sex: p.sex } : null;
+  const m = boardModel(targetDate(), honmei, state.period, birth);
   if (m.error) return `<div class="card"><p class="empty">${m.error}</p></div>`;
 
   const pos = m.fortune.isClosed
@@ -91,6 +114,7 @@ function screenToday() {
       <h2 class="card__title">${m.label}の運勢</h2>
       <p>本命星は <b>${pos}</b> に回座しています。</p>
       <div class="tendency">${m.fortune.tendency}</div>
+      ${layersBlock(m.fortune.layers)}
     </div>
     <div class="card">
       <h2 class="card__title">${term('吉方位')}</h2>

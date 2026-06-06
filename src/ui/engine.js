@@ -5,7 +5,7 @@ import { solarYearOf, solarMonthOf, sexagenaryDayIndex, dayBoard } from '../calc
 import { yearStar, honmeiStar, getsumeiStar, monthBoardCenter, keishaPalace } from '../calc/honmei.js';
 import { placeStars } from '../calc/board.js';
 import { judgeDirections } from '../calc/direction.js';
-import { fortuneOf } from '../calc/fortune.js';
+import { fortuneOf, fortuneLayers } from '../calc/fortune.js';
 import { compatibility } from '../calc/compatibility.js';
 
 export function starName(star) {
@@ -24,7 +24,8 @@ export function diagnose(birthDate, sex) {
 }
 
 // 盤のビューモデル。period: 'day' | 'month' | 'year'。範囲外は { error } を返す。
-export function boardModel(date, honmei, period) {
+// birth = { date: Date, sex } を渡すと運勢に多層（月命/傾斜/五行）を付与する（後方互換）。
+export function boardModel(date, honmei, period, birth = null) {
   try {
     let center;
     let branch;
@@ -53,7 +54,12 @@ export function boardModel(date, honmei, period) {
     }
     const board = placeStars(center);
     const judged = judgeDirections(board, branch, honmei, breakName);
-    const fortune = fortuneOf(honmei, board);
+    let fortune = fortuneOf(honmei, board);
+    if (birth && birth.date) {
+      const getsumei = getsumeiStar(birth.date);
+      const keisha = keishaPalace(honmei, getsumei, birth.sex);
+      fortune = { ...fortune, layers: fortuneLayers(honmei, getsumei, keisha, board) };
+    }
     const goodDirs = PALACES.filter((d) => judged[d].verdict === '吉').map((d) => DIR_NAMES[d]);
     const badDirs = PALACES.filter((d) => judged[d].verdict === '凶').map((d) => DIR_NAMES[d]);
     return { center, board, judged, fortune, breakName, ton, label, goodDirs, badDirs };
