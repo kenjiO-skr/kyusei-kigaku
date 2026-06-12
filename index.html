@@ -27,8 +27,17 @@
   <script type="module" src="./src/ui/app.js"></script>
   <script>
     // service worker 登録（相対パス＝サブパス scope）。失敗してもアプリは動作する。
+    // 新版 SW が制御を引き継いだら（=更新が取得できたら）自動で再読み込みして即反映する。
+    // 初回訪問は制御者不在から claim されるだけなので再読み込みしない（hadController で判定）。
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
+        const hadController = !!navigator.serviceWorker.controller;
+        let refreshed = false;
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          if (!hadController || refreshed) return;
+          refreshed = true;
+          location.reload();
+        });
         navigator.serviceWorker.register('./sw.js').catch(() => { /* 非対応・file:// では無視 */ });
       });
     }
