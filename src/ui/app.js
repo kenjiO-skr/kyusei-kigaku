@@ -10,10 +10,10 @@ import { KEISHA_LENS } from '../calc/fortune.js';
 
 const STORAGE_KEY = 'kyusei.profile';
 const DEFAULT_PROFILE = { birthDate: '', sex: 'female', honmei: 2 }; // 既定は本人=二黒土星
-const DATE_MIN = '1950-02-04';
-const DATE_MAX = '2035-12-31';
+const YEAR_MIN = 1950; // 暦データの対応範囲（calendar-data.js）
+const YEAR_MAX = 2035;
 
-// 今日の日付を 'YYYY-MM-DD'（ローカル）で返す。input[type=date] の既定値用。
+// 今日の日付を 'YYYY-MM-DD'（ローカル）で返す。対象日の既定値用。
 function todayISO() {
   const d = new Date();
   const mm = String(d.getMonth() + 1).padStart(2, '0');
@@ -56,6 +56,55 @@ function effectiveHonmei() {
   return honmei ?? 2;
 }
 
+// ---- 日付セレクト（年・月・日） ----
+// input[type=date] は iOS で「年月ホイール→日タップ」の2段階になるため、
+// 年・月・日を最初から横に並べたセレクトで直接選べるようにする。
+
+// その年月の月末日。年か月が未選択(0)のときは 31（選択肢を狭めない）。
+function daysInMonth(y, m) {
+  return y && m ? new Date(y, m, 0).getDate() : 31;
+}
+
+// セレクトの option 列。sel が未選択(0)のときだけ先頭にプレースホルダを付ける。
+function rangeOptions(from, to, sel) {
+  let html = sel ? '' : '<option value="" selected>--</option>';
+  for (let v = from; v <= to; v++) {
+    html += `<option value="${v}"${v === sel ? ' selected' : ''}>${v}</option>`;
+  }
+  return html;
+}
+
+// 年・月・日のセレクト一式。iso は 'YYYY-MM-DD' または ''（全欄プレースホルダ）。
+function dateSelects(field, iso) {
+  const [y, m, d] = iso ? iso.split('-').map(Number) : [0, 0, 0];
+  return `<span class="date-sel" data-date-field="${field}">
+    <select data-date-part="y" aria-label="年">${rangeOptions(YEAR_MIN, YEAR_MAX, y)}</select><span class="date-sel__unit">年</span>
+    <select data-date-part="m" aria-label="月">${rangeOptions(1, 12, m)}</select><span class="date-sel__unit">月</span>
+    <select data-date-part="d" aria-label="日">${rangeOptions(1, daysInMonth(y, m), d)}</select><span class="date-sel__unit">日</span>
+  </span>`;
+}
+
+// セレクト一式から 'YYYY-MM-DD' を組み立てる。未選択が残れば ''。
+function readDateSelects(el) {
+  const part = (p) => Number(el.querySelector(`[data-date-part="${p}"]`).value);
+  const y = part('y');
+  const m = part('m');
+  const d = part('d');
+  if (!y || !m || !d) return '';
+  return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+}
+
+// 年・月の変更に合わせて日の選択肢を月末日まで再構築（選択中の日はクランプ）。
+// これにより 2/31 のような不正日付は入力経路に存在しない。
+function syncDayOptions(el) {
+  const daySel = el.querySelector('[data-date-part="d"]');
+  const y = Number(el.querySelector('[data-date-part="y"]').value);
+  const m = Number(el.querySelector('[data-date-part="m"]').value);
+  const max = daysInMonth(y, m);
+  const cur = Math.min(Number(daySel.value) || 0, max);
+  daySel.innerHTML = rangeOptions(1, max, cur);
+}
+
 // ---- 共通パーツ ----
 function honmeiBadge(star) {
   return `<span class="badge-honmei">${term('本命星')}：<span class="badge-honmei__star">${STAR_NAMES[star]}</span></span>`;
@@ -76,7 +125,7 @@ function orientToggle() {
 function datePicker() {
   const isToday = state.targetDate === todayISO();
   return `<div class="date-pick">
-    <input type="date" data-target-date value="${state.targetDate}" min="${DATE_MIN}" max="${DATE_MAX}" aria-label="対象の日付" />
+    ${dateSelects('target', state.targetDate)}
     <button data-action="reset-date"${isToday ? ' disabled' : ''}>今日</button>
   </div>`;
 }
@@ -120,7 +169,15 @@ function screenToday() {
   const p = state.profile;
   const birth = p.birthDate ? { date: parseDateInput(p.birthDate), sex: p.sex } : null;
   const m = boardModel(targetDate(), honmei, state.period, birth);
-  if (m.error) return `<div class="card"><p class="empty">${m.error}</p></div>`;
+  // 範囲外等のエラー時もツールバーは残し、日付を選び直せるようにする。
+  if (m.error) {
+    return `
+    <div class="card">
+      <div class="toolbar">${honmeiBadge(honmei)} ${periodToggle()}</div>
+      <div class="toolbar">${datePicker()}</div>
+      <p class="empty">${m.error}</p>
+    </div>`;
+  }
 
   const pos = m.fortune.isClosed
     ? term('八方塞がり')
@@ -148,7 +205,15 @@ function screenDirections() {
   const honmei = effectiveHonmei();
   if (honmei == null) return needProfile();
   const m = boardModel(targetDate(), honmei, state.period);
-  if (m.error) return `<div class="card"><p class="empty">${m.error}</p></div>`;
+  // 範囲外等のエラー時もツールバーは残し、日付を選び直せるようにする。
+  if (m.error) {
+    return `
+    <div class="card">
+      <div class="toolbar">${periodToggle()} ${orientToggle()}</div>
+      <div class="toolbar">${datePicker()}</div>
+      <p class="empty">${m.error}</p>
+    </div>`;
+  }
 
   return `
     <div class="card">
@@ -195,8 +260,8 @@ function screenHonmei() {
     <div class="card">
       <h2 class="card__title">あなたの星を調べる</h2>
       <div class="field">
-        <label for="birth">生年月日</label>
-        <input type="date" id="birth" value="${p.birthDate}" min="${DATE_MIN}" max="${DATE_MAX}" />
+        <label>生年月日</label>
+        ${dateSelects('birth', p.birthDate)}
       </div>
       <div class="field">
         <label>性別（${term('傾斜')}の特例判定に使用）</label>
@@ -218,12 +283,12 @@ function screenCompat() {
     <div class="card">
       <h2 class="card__title">${term('相性')}診断</h2>
       <div class="field">
-        <label for="birthA">あなたの生年月日</label>
-        <input type="date" id="birthA" value="${p.birthDate}" min="${DATE_MIN}" max="${DATE_MAX}" />
+        <label>あなたの生年月日</label>
+        ${dateSelects('birthA', p.birthDate)}
       </div>
       <div class="field">
-        <label for="birthB">お相手の生年月日</label>
-        <input type="date" id="birthB" value="" min="${DATE_MIN}" max="${DATE_MAX}" />
+        <label>お相手の生年月日</label>
+        ${dateSelects('birthB', '')}
       </div>
       <button class="btn" data-action="compat">相性を見る</button>
     </div>
@@ -325,7 +390,7 @@ document.addEventListener('click', (e) => {
   if (e.target.closest('[data-action="close-tip"]')) { hideTip(); return; }
 
   if (e.target.closest('[data-action="save-profile"]')) {
-    const birthDate = document.getElementById('birth').value;
+    const birthDate = readDateSelects(document.querySelector('[data-date-field="birth"]'));
     const sex = document.querySelector('input[name="sex"]:checked')?.value || 'female';
     const honmei = birthDate ? safeHonmei(birthDate) : state.profile.honmei;
     saveProfile({ ...state.profile, birthDate, sex, honmei: honmei ?? state.profile.honmei });
@@ -334,8 +399,8 @@ document.addEventListener('click', (e) => {
   }
 
   if (e.target.closest('[data-action="compat"]')) {
-    const birthA = document.getElementById('birthA').value;
-    const birthB = document.getElementById('birthB').value;
+    const birthA = readDateSelects(document.querySelector('[data-date-field="birthA"]'));
+    const birthB = readDateSelects(document.querySelector('[data-date-field="birthB"]'));
     document.getElementById('compat-result').innerHTML = compatResultHtml(birthA, birthB);
     return;
   }
@@ -344,21 +409,17 @@ document.addEventListener('click', (e) => {
   if (!e.target.closest('#tooltip')) hideTip();
 });
 
-// 対象日ピッカーの変更（change はクリックでは拾えないため別途委譲）。
-// 編集中（フォーカス中）の再描画は input を破棄してキーボード編集・iOSホイール操作を
-// 中断させるため、フォーカスが外れてから描画する。
-let pendingRender = false;
+// 日付セレクトの変更（change はクリック委譲では拾えないため別途委譲）。
+// 日の選択肢を年月に同期し、対象日が完全な日付になったら盤を再描画する。
+// セレクトは選択した瞬間に確定して閉じるため、再描画で操作が中断することはない。
 document.addEventListener('change', (e) => {
-  const di = e.target.closest('[data-target-date]');
-  if (!di) return;
-  state.targetDate = di.value || todayISO();
-  if (document.activeElement === di) { pendingRender = true; return; }
-  render();
-});
-document.addEventListener('focusout', (e) => {
-  if (pendingRender && e.target.closest('[data-target-date]')) {
-    pendingRender = false;
-    render();
+  const sel = e.target.closest('[data-date-part]');
+  if (!sel) return;
+  const field = sel.closest('[data-date-field]');
+  syncDayOptions(field);
+  if (field.dataset.dateField === 'target') {
+    const iso = readDateSelects(field);
+    if (iso) { state.targetDate = iso; render(); }
   }
 });
 

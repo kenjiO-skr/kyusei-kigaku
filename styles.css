@@ -104,13 +104,10 @@ body {
 
 /* 対象日ピッカー（運勢・方位） */
 .date-pick { display: inline-flex; align-items: center; gap: 8px; }
-.date-pick input[type="date"] {
-  padding: 8px 12px; border: 2px solid var(--sub); border-radius: var(--radius-sm);
-  font-size: 0.9rem; color: var(--ink); background: #fff; font-family: inherit;
-}
 .date-pick button {
   border: 0; background: var(--sub); color: var(--ink-soft);
-  padding: 8px 16px; border-radius: 999px; font-weight: 700; cursor: pointer; font-size: 0.85rem;
+  padding: 8px 14px; border-radius: 999px; font-weight: 700; cursor: pointer; font-size: 0.85rem;
+  white-space: nowrap;
 }
 .date-pick button:disabled { opacity: 0.5; cursor: default; }
 
@@ -156,10 +153,14 @@ body {
 /* フォーム */
 .field { margin: 12px 0; }
 .field label { display: block; font-weight: 700; font-size: 0.9rem; margin-bottom: 6px; }
-.field input[type="date"], .field select {
-  width: 100%; padding: 12px; border: 2px solid var(--sub); border-radius: var(--radius-sm);
-  font-size: 1rem; color: var(--ink); background: #fff; font-family: inherit;
+
+/* 年・月・日セレクト（対象日・生年月日 共通） */
+.date-sel { display: inline-flex; align-items: center; gap: 4px; }
+.date-sel select {
+  padding: 8px 6px; border: 2px solid var(--sub); border-radius: var(--radius-sm);
+  font-size: 0.95rem; color: var(--ink); background: #fff; font-family: inherit;
 }
+.date-sel__unit { font-size: 0.85rem; color: var(--ink-soft); }
 .seg { display: inline-flex; gap: 8px; }
 .seg label { display: inline-flex; align-items: center; gap: 4px; font-weight: 600; }
 .btn {
