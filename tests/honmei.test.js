@@ -28,6 +28,17 @@ describe('yearStar / honmeiStar 本命星', () => {
     expect(honmeiStar(D(2025, 2, 3))).toBe(2); // 2025生=二黒
     expect(honmeiStar(D(2025, 2, 2))).toBe(3); // 2024生=三碧
   });
+
+  it('暦データ下限の節年欠落域（1950年1月）：本命星は出るが月命星は RangeError', () => {
+    expect(honmeiStar(D(1950, 1, 15))).toBe(6); // 1949生=六白
+    expect(() => getsumeiStar(D(1950, 1, 15))).toThrow(RangeError);
+  });
+
+  it('うるう日 2/29 生まれ（2000-02-29＝立春後の寅月）', () => {
+    expect(honmeiStar(D(2000, 2, 29))).toBe(9); // 2000生=九紫
+    // 2000=辰年（辰戌丑未→寅月基準=五黄）、寅月(monthIndex 0)の月盤中宮=五黄
+    expect(getsumeiStar(D(2000, 2, 29))).toBe(5);
+  });
 });
 
 describe('monthBoardCenter / getsumeiStar 月命星（仕様メモ§3）', () => {

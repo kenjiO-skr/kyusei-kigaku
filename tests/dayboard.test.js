@@ -50,4 +50,13 @@ describe('日盤 範囲外', () => {
   it('最初の切替より前は例外', () => {
     expect(() => dayBoardCenter(D(2025, 1, 1))).toThrow(RangeError);
   });
+
+  it('最後の切替（2035冬至直近の甲子）＋180日以降は例外（陽遁を黙って外挿しない）', () => {
+    expect(() => dayBoardCenter(D(2036, 7, 15))).toThrow(RangeError);
+    expect(() => dayBoardCenter(D(2040, 1, 1))).toThrow(RangeError);
+  });
+
+  it('最後の切替直後の通常期は正常（2036-03-01）', () => {
+    expect(() => dayBoardCenter(D(2036, 3, 1))).not.toThrow();
+  });
 });

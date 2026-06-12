@@ -77,6 +77,15 @@ body {
 .v-bad { background: var(--bad-bg); color: var(--bad); }
 .v-neutral { background: var(--neutral-bg); color: var(--neutral); }
 
+/* 総合運勢バッジ（見出し右・規約固定：吉=緑／守り=赤／平・小凶=グレー） */
+.rating {
+  display: inline-block; vertical-align: middle; border-radius: 999px;
+  padding: 1px 10px; font-size: 0.8rem; font-weight: 700; margin-left: 4px;
+}
+.rating--good { background: var(--good-bg); color: var(--good); border: 1.5px solid var(--good); }
+.rating--bad { background: var(--bad-bg); color: var(--bad); border: 1.5px solid var(--bad); }
+.rating--neutral { background: var(--neutral-bg); color: var(--neutral); border: 1.5px solid var(--neutral); }
+
 /* 運勢・行 */
 .row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 7px 0; }
 .row + .row { border-top: 1px dashed var(--sub); }

@@ -23,7 +23,8 @@ function cmpYMD(ay, am, ad, by, bm, bd) {
 
 function assertCovered(y) {
   const [lo, hi] = CALENDAR_COVERAGE.solarTerms;
-  if (y < lo || y > hi) {
+  // Invalid Date は y=NaN になり比較がすべて false で素通りするため、整数判定で弾く。
+  if (!Number.isInteger(y) || y < lo || y > hi) {
     throw new RangeError(`暦データ範囲外: ${y}年（対応 ${lo}–${hi}年）`);
   }
 }
@@ -47,6 +48,11 @@ export function solarMonthOf(date) {
   const { y, m, d } = ymd(date);
   assertCovered(y);
   const solarYear = solarYearOf(date);
+  // 立春前の日付では節年が暦年−1 になり収録範囲を割り得る（例：1950年1月→節年1949）。
+  if (!SOLAR_TERMS[solarYear]) {
+    const [lo, hi] = CALENDAR_COVERAGE.solarTerms;
+    throw new RangeError(`暦データ範囲外: 節年${solarYear}年（対応 ${lo}–${hi}年）`);
+  }
 
   // 節月境界を昇順に並べる。
   //   monthIndex 0..10 = 立春..大雪（SOLAR_TERMS[solarYear] の index 1..11, 暦年=solarYear）
@@ -127,10 +133,17 @@ const SWITCH_CHAIN = (() => {
   return chain;
 })();
 
+// 最後の切替日（JDN）。これ＋通常間隔(180日)−1 を超える日付は、収録外の次切替
+// （2036夏至）を取り逃して陽遁を誤外挿するため範囲外として扱う。
+const LAST_SWITCH_JDN = SWITCH_CHAIN[SWITCH_CHAIN.length - 1].jdn;
+
 // 日盤の中宮星と遁（陽遁/陰遁）。date 以下で最も遅い切替日から日数で繰る。
 // SOLSTICES の範囲（2025–2035）に依存。最初の切替（2025夏至付近）より前は範囲外。
 export function dayBoard(date) {
   const j = jdnOf(date);
+  if (j > LAST_SWITCH_JDN + 179) {
+    throw new RangeError('日盤データ範囲外（SOLSTICES 2025–2035 の最後の切替日から180日以降）');
+  }
   let chosen = null;
   for (const s of SWITCH_CHAIN) {
     if (s.jdn <= j && (!chosen || s.jdn > chosen.jdn)) chosen = s;

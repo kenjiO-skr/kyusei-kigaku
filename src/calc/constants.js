@@ -57,19 +57,7 @@ export const STAR_ELEMENT = {
   9: ELEMENT.FIRE, // 九紫=火
 };
 
-// 八方位＋中央
-export const DIR = {
-  CENTER: 'center', // 中宮
-  N: 'n', // 北（坎）
-  NE: 'ne', // 北東（艮）
-  E: 'e', // 東（震）
-  SE: 'se', // 南東（巽）
-  S: 's', // 南（離）
-  SW: 'sw', // 南西（坤）
-  W: 'w', // 西（兌）
-  NW: 'nw', // 北西（乾）
-};
-
+// 八方位＋中央（キーは 'center' | 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w' | 'nw'）
 export const DIR_NAMES = {
   center: '中宮',
   n: '北',
@@ -137,10 +125,8 @@ export const HOME_DIR_BY_STAR = {
 // 飛泊の対象となる八宮（中宮を除く）。盤配置の反復に使う。
 export const PALACES = ['n', 'ne', 'e', 'se', 's', 'sw', 'w', 'nw'];
 
-// 十二支（0=子 … 11=亥）
-export const BRANCH_NAMES = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
-
-// 十二支 → 方位（仕様メモ §4）。丑寅=北東、辰巳=南東、未申=南西、戌亥=北西に同居。
+// 十二支 → 方位（仕様メモ §4）。番号は 0=子 … 11=亥。
+// 丑寅=北東、辰巳=南東、未申=南西、戌亥=北西に同居。
 export const BRANCH_DIR = {
   0: 'n', // 子=北
   1: 'ne', // 丑=北東

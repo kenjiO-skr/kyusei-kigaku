@@ -3,7 +3,7 @@
 import { STAR_NAMES, DIR_NAMES } from '../calc/constants.js';
 import { honmeiStar } from '../calc/honmei.js';
 import { parseDateInput, formatDateWithWareki } from './format.js';
-import { boardModel, diagnose, compatModel, starName, elementName } from './engine.js';
+import { boardModel, diagnose, compatModel, elementName } from './engine.js';
 import { renderBoard } from './board-view.js';
 import { GLOSSARY, term } from './glossary.js';
 
@@ -23,11 +23,20 @@ function todayISO() {
 const state = { tab: 'today', period: 'day', orient: 'south', targetDate: todayISO(), profile: loadProfile() };
 
 function loadProfile() {
+  let raw;
   try {
-    return { ...DEFAULT_PROFILE, ...JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}') };
+    raw = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
   } catch {
-    return { ...DEFAULT_PROFILE };
+    raw = {};
   }
+  const p = { ...DEFAULT_PROFILE, ...raw };
+  // localStorage は信頼境界の外：値域を検証し、不正値は既定値へ戻す（innerHTML に流すため）。
+  if (typeof p.birthDate !== 'string' || (p.birthDate && !/^\d{4}-\d{2}-\d{2}$/.test(p.birthDate))) {
+    p.birthDate = DEFAULT_PROFILE.birthDate;
+  }
+  if (!Number.isInteger(p.honmei) || p.honmei < 1 || p.honmei > 9) p.honmei = DEFAULT_PROFILE.honmei;
+  if (p.sex !== 'female' && p.sex !== 'male') p.sex = DEFAULT_PROFILE.sex;
+  return p;
 }
 function saveProfile(p) {
   state.profile = p;
@@ -35,11 +44,13 @@ function saveProfile(p) {
 }
 
 // 有効な本命星：生年月日があれば算出、なければ保存値（既定=二黒）。
+// 生年月日があるのに算出できない（範囲外等）場合は null を返し、
+// 既定星の運勢を黙って表示しない（needProfile 表示に誘導）。
 function effectiveHonmei() {
   const { birthDate, honmei } = state.profile;
   if (birthDate) {
     const d = parseDateInput(birthDate);
-    try { return honmeiStar(d); } catch { return honmei ?? null; }
+    try { return honmeiStar(d); } catch { return null; }
   }
   return honmei ?? 2;
 }
@@ -71,6 +82,13 @@ function datePicker() {
 // 現在の対象日（Date）。クリア時などは今日にフォールバック。
 function targetDate() {
   return parseDateInput(state.targetDate) || new Date();
+}
+
+// 総合運勢バッジ（4段階）。配色規約：吉=緑系／守り（凶殺=八方塞がり）=赤系／平・小凶=グレー系。
+function ratingBadge(rating) {
+  if (!rating) return '';
+  const cls = { 吉: 'good', 平: 'neutral', 小凶: 'neutral', 守り: 'bad' }[rating] || 'neutral';
+  return `<span class="rating rating--${cls}">${rating}</span>`;
 }
 
 // 運勢の多層ブロック（月命・傾斜・五行＝補助的解釈）。layers が無ければ空文字。
@@ -111,7 +129,7 @@ function screenToday() {
     <div class="card">
       <div class="toolbar">${honmeiBadge(honmei)} ${periodToggle()}</div>
       <div class="toolbar">${datePicker()}</div>
-      <h2 class="card__title">${m.label}の運勢</h2>
+      <h2 class="card__title">${m.label}の運勢 ${ratingBadge(m.fortune.rating)}</h2>
       <p>本命星は <b>${pos}</b> に回座しています。</p>
       <div class="tendency">${m.fortune.tendency}</div>
       ${layersBlock(m.fortune.layers)}
@@ -256,6 +274,7 @@ function footer() {
 }
 
 function render() {
+  hideTip(); // 表示内容が変わるため、開いていた用語吹き出しは閉じる
   document.getElementById('app').innerHTML = header() + SCREENS[state.tab]() + footer() + tabbar();
 }
 
@@ -275,7 +294,7 @@ function hideTip() {
 // ---- イベント（委譲） ----
 document.addEventListener('click', (e) => {
   const tab = e.target.closest('[data-tab]');
-  if (tab) { state.tab = tab.dataset.tab; hideTip(); render(); return; }
+  if (tab) { state.tab = tab.dataset.tab; render(); return; }
 
   const per = e.target.closest('[data-period]');
   if (per) { state.period = per.dataset.period; render(); return; }
@@ -314,10 +333,33 @@ document.addEventListener('click', (e) => {
   if (!e.target.closest('#tooltip')) hideTip();
 });
 
-// 対象日ピッカーの変更（change はクリックでは拾えないため別途委譲）
+// 対象日ピッカーの変更（change はクリックでは拾えないため別途委譲）。
+// 編集中（フォーカス中）の再描画は input を破棄してキーボード編集・iOSホイール操作を
+// 中断させるため、フォーカスが外れてから描画する。
+let pendingRender = false;
 document.addEventListener('change', (e) => {
   const di = e.target.closest('[data-target-date]');
-  if (di) { state.targetDate = di.value || todayISO(); render(); }
+  if (!di) return;
+  state.targetDate = di.value || todayISO();
+  if (document.activeElement === di) { pendingRender = true; return; }
+  render();
+});
+document.addEventListener('focusout', (e) => {
+  if (pendingRender && e.target.closest('[data-target-date]')) {
+    pendingRender = false;
+    render();
+  }
+});
+
+// 日付を跨いで開き続けたとき、復帰時に「今日」を追従させる（盤とヘッダーの食い違い防止）。
+let renderedToday = todayISO();
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState !== 'visible') return;
+  const now = todayISO();
+  if (now === renderedToday) return;
+  if (state.targetDate === renderedToday) state.targetDate = now; // 旧「今日」を見ていた場合のみ追従
+  renderedToday = now;
+  render();
 });
 
 function safeHonmei(birthDate) {

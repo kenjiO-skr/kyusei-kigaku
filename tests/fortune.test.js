@@ -22,6 +22,26 @@ describe('fortuneOf 本命星の回座', () => {
   });
 });
 
+describe('fortuneOf 総合運勢 rating（流派準拠4段階・本命=二黒）', () => {
+  it('生気・比和 → 吉', () => {
+    expect(fortuneOf(2, placeStars(7)).rating).toBe('吉'); // 二黒は南（離宮）＝同会九紫(火)・生気
+    expect(fortuneOf(2, placeStars(8)).rating).toBe('吉'); // 二黒は北東（艮宮）＝同会八白(土)・比和
+  });
+
+  it('退気 → 平', () => {
+    expect(fortuneOf(2, placeStars(yearStar(2026))).rating).toBe('平'); // 北西＝同会六白(金)・退気
+  });
+
+  it('殺気・死気 → 小凶', () => {
+    expect(fortuneOf(2, placeStars(4)).rating).toBe('小凶'); // 二黒は東（震宮）＝同会三碧(木)・殺気
+    expect(fortuneOf(2, placeStars(6)).rating).toBe('小凶'); // 二黒は北（坎宮）＝同会一白(水)・死気
+  });
+
+  it('八方塞がり → 守り', () => {
+    expect(fortuneOf(2, placeStars(2)).rating).toBe('守り');
+  });
+});
+
 describe('fortuneLayers 多層運勢', () => {
   it('1971生(二黒/月命七赤)×2026年盤：本命=退気・月命=上向き・非割れ', () => {
     const board = placeStars(yearStar(2026)); // 一白中宮

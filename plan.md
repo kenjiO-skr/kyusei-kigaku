@@ -56,3 +56,14 @@
 - [x] engine.boardModel(…, birth) で birth 指定時のみ fortune.layers 付与（後方互換）／app.js screenToday に多層表示＋流派差注記
 - [x] glossary に「同会」追加／tests/fortune.test.js に多層検証3ケース追加（既存2件は不変）
 - [x] vitest 全緑（72件）。direction/§5/§2・吉方位/相性/診断は無改変。SW キャッシュ v3 へバンプ
+
+## Phase 9 多面レビュー改修＋総合運勢バッジ（2026-06-12）
+- [x] read-only 多面レビュー（5観点×反証チェック）→ 確定17件・棄却5件（中核ロジックはオラクル全点一致）
+- [x] calc 境界防御：assertCovered の NaN 弾き／solarMonthOf の節年欠落ガード（1950年1月）／dayBoard 上限ガード（2036年夏以降の陽遁誤外挿を RangeError 化）
+- [x] SW：addAll を cache:'reload' 化（GitHub Pages max-age=600 の旧アセット封入対策）＋ v4 バンプ
+- [x] UI：loadProfile 値域検証（self-XSS/undefined 露出遮断）／effectiveHonmei の黙示フォールバック廃止／吹き出しは render 冒頭で閉じる／日付跨ぎ追従（visibilitychange）／対象日ピッカーは focusout 後に描画（編集中断防止）
+- [x] デッドコード削除（DIR・BRANCH_NAMES・engine.starName）／docs に SOLSTICES 拡張時の注意を追記
+- [x] 総合運勢バッジ（流派準拠4段階：吉=緑/平・小凶=グレー/守り=赤）を「〜の運勢」見出し右に表示（fortuneOf.rating）
+- [x] テスト 72→93件 全緑：§4 立春オラクル86年分突合・二至・甲子固定点／境界（1950年1月・2036年上限・2/29・Invalid Date）／死気→小凶・月破/日破 e2e／rating 4段階／sw.js ASSETS 突合
+- [x] ブラウザ目視確認（吉/小凶/守りバッジ・方位盤デグレなし・XSS無効化・コンソールエラーなし）
+- [ ] ユーザー目視確認 → コミット・push（Pages 反映）

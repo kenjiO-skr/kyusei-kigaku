@@ -1,7 +1,7 @@
 // sw.js — service worker（アプリシェルのキャッシュ）。
 // パスはすべて相対：cache.addAll は sw.js の位置（=サブパス scope）を基準に解決される。
 // 出荷物を増やしたらバージョンを上げてキャッシュを更新する。
-const CACHE = 'kyusei-v3';
+const CACHE = 'kyusei-v4';
 
 const ASSETS = [
   './',
@@ -28,7 +28,13 @@ const ASSETS = [
 ];
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS)).then(() => self.skipWaiting()));
+  // cache: 'reload' で HTTP キャッシュをバイパスする（GitHub Pages の max-age=600 により
+  // デプロイ直後の再訪で旧アセットが新キャッシュへ封入されるのを防ぐ）。
+  event.waitUntil(
+    caches.open(CACHE)
+      .then((c) => c.addAll(ASSETS.map((u) => new Request(u, { cache: 'reload' }))))
+      .then(() => self.skipWaiting())
+  );
 });
 
 self.addEventListener('activate', (event) => {

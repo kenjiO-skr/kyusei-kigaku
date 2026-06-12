@@ -25,17 +25,25 @@ const FORTUNE_TENDENCY = {
   nw: '目上・公的・決断の時期とされる。責任やリーダー役が回りやすいという。',
 };
 
+// 総合運勢（流派準拠4段階）。同会（回座宮の定位星との五行関係）から導出。
+//   生気・比和=吉／退気=平／殺気・死気=小凶／八方塞がり=守り（ADR-001 の方位判定と同じ尺度）。
+const RATING_BY_RELATION = { 生気: '吉', 比和: '吉', 退気: '平', 殺気: '小凶', 死気: '小凶' };
+
 // 本命星が board のどこに回座するかから運勢傾向を返す。
-//   { dir, isClosed（八方塞がり）, dirName, palace, tendency }
+//   { dir, isClosed（八方塞がり）, dirName, palace, tendency, rating }
 export function fortuneOf(honmei, board) {
   const dir = dirOfStar(board, honmei);
   const isClosed = dir === 'center';
+  const rating = isClosed
+    ? '守り'
+    : RATING_BY_RELATION[elementRelation(STAR_ELEMENT[honmei], STAR_ELEMENT[HOME_STAR_BY_DIR[dir]])];
   return {
     dir,
     isClosed,
     dirName: DIR_NAMES[dir],
     palace: PALACE_NAMES[dir],
     tendency: FORTUNE_TENDENCY[dir],
+    rating,
   };
 }
 

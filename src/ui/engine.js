@@ -1,6 +1,6 @@
 // engine.js — 計算エンジン(src/calc)を画面用のビューモデルに変換する層。
 // calc は純関数のまま保ち、UI都合の組み立てはここに集約する。
-import { STAR_NAMES, STAR_ELEMENT, ELEMENT_NAMES, DIR_NAMES, PALACES } from '../calc/constants.js';
+import { STAR_ELEMENT, ELEMENT_NAMES, DIR_NAMES, PALACES } from '../calc/constants.js';
 import { solarYearOf, solarMonthOf, sexagenaryDayIndex, dayBoard } from '../calc/calendar.js';
 import { yearStar, honmeiStar, getsumeiStar, monthBoardCenter, keishaPalace } from '../calc/honmei.js';
 import { placeStars } from '../calc/board.js';
@@ -8,9 +8,6 @@ import { judgeDirections } from '../calc/direction.js';
 import { fortuneOf, fortuneLayers } from '../calc/fortune.js';
 import { compatibility } from '../calc/compatibility.js';
 
-export function starName(star) {
-  return STAR_NAMES[star];
-}
 export function elementName(star) {
   return ELEMENT_NAMES[STAR_ELEMENT[star]];
 }

@@ -4,6 +4,7 @@ import { killDirections, judgeDirections } from '../src/calc/direction.js';
 import { placeStars } from '../src/calc/board.js';
 import { yearStar } from '../src/calc/honmei.js';
 import { STAR } from '../src/calc/constants.js';
+import { boardModel } from '../src/ui/engine.js';
 
 // 2026年＝丙午年（午=南, branch 6）。年盤中宮=一白。本命星=二黒(2)。
 const board2026 = placeStars(yearStar(2026)); // 一白中宮
@@ -53,6 +54,29 @@ describe('§2 八方位の最終判定（2026年盤・二黒視点）', () => {
   it('東は八白(土)で比和→吉, 南西は七赤(金)で退気→中立', () => {
     expect(judged.e).toMatchObject({ star: 8, relation: '比和', verdict: '吉' });
     expect(judged.sw).toMatchObject({ star: 7, relation: '退気', verdict: '中立' });
+  });
+});
+
+describe('死気→小凶（rankByElement の else 経路）', () => {
+  it('七赤中宮盤・子年・本命二黒：北東の一白（水）は死気で小凶', () => {
+    // 七赤中宮(k=7)の飛泊：北東(d=8)=一白。凶殺は 東=五黄殺/西=暗剣殺/南=歳破・本命殺/北=本命的殺
+    // → 北東は凶殺非該当。二黒(土)→一白(水)は土剋水＝死気 → 小凶。
+    const judged = judgeDirections(placeStars(7), 0 /* 子 */, 2, '歳破');
+    expect(judged.ne).toMatchObject({ star: 1, relation: '死気', verdict: '小凶' });
+  });
+});
+
+describe('月破・日破の end-to-end（盤の十二支の導出込み）', () => {
+  it('日破：2026-02-19＝甲子（子の日）→ 日破は南', () => {
+    const m = boardModel(new Date(2026, 1, 19), 2, 'day');
+    expect(m.error).toBeUndefined();
+    expect(m.judged.s.kills).toContain('日破');
+  });
+
+  it('月破：2026年寅月（2026-02-19）→ 月破は南西（寅=北東の対冲）', () => {
+    const m = boardModel(new Date(2026, 1, 19), 2, 'month');
+    expect(m.error).toBeUndefined();
+    expect(m.judged.sw.kills).toContain('月破');
   });
 });
 
