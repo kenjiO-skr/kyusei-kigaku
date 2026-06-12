@@ -5,7 +5,8 @@ import { honmeiStar } from '../calc/honmei.js';
 import { parseDateInput, formatDateWithWareki } from './format.js';
 import { boardModel, diagnose, compatModel, elementName } from './engine.js';
 import { renderBoard } from './board-view.js';
-import { GLOSSARY, term } from './glossary.js';
+import { GLOSSARY, term, STAR_DESCRIPTIONS, ELEMENT_DESCRIPTIONS } from './glossary.js';
+import { KEISHA_LENS } from '../calc/fortune.js';
 
 const STORAGE_KEY = 'kyusei.profile';
 const DEFAULT_PROFILE = { birthDate: '', sex: 'female', honmei: 2 }; // 既定は本人=二黒土星
@@ -172,9 +173,19 @@ function screenHonmei() {
           <h2 class="card__title">診断結果</h2>
           ${term('本命星')}
           <div class="diag__main">${STAR_NAMES[honmei]}</div>
-          <div class="kv"><span class="kv__k">${term('月命星')}</span><span class="kv__v">${STAR_NAMES[getsumei]}</span></div>
-          <div class="kv"><span class="kv__k">${term('傾斜')}宮</span><span class="kv__v">${keisha.palace}（${STAR_NAMES[keisha.star]}）</span></div>
-          <div class="kv"><span class="kv__k">五行</span><span class="kv__v">${elementName(honmei)}</span></div>
+          <p class="kv__desc">${STAR_DESCRIPTIONS[honmei]}</p>
+          <div class="kv-block">
+            <div class="kv"><span class="kv__k">${term('月命星')}</span><span class="kv__v">${STAR_NAMES[getsumei]}</span></div>
+            <p class="kv__desc">内面や若い頃の傾向を表すとされる星。${STAR_DESCRIPTIONS[getsumei]}</p>
+          </div>
+          <div class="kv-block">
+            <div class="kv"><span class="kv__k">${term('傾斜')}宮</span><span class="kv__v">${keisha.palace}（${STAR_NAMES[keisha.star]}）</span></div>
+            <p class="kv__desc">${KEISHA_LENS[keisha.dir]}</p>
+          </div>
+          <div class="kv-block">
+            <div class="kv"><span class="kv__k">五行</span><span class="kv__v">${elementName(honmei)}</span></div>
+            <p class="kv__desc">${ELEMENT_DESCRIPTIONS[elementName(honmei)]}</p>
+          </div>
         </div>`;
     } catch (e) {
       result = `<div class="card"><p class="empty">${e instanceof RangeError ? '対応範囲は1950年〜2035年です。' : '日付を確認してください。'}</p></div>`;

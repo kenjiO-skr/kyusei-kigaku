@@ -173,9 +173,11 @@ body {
 /* 診断結果 */
 .diag { text-align: center; }
 .diag__main { font-size: 2rem; font-weight: 700; color: var(--honmei); margin: 8px 0; }
-.kv { display: flex; justify-content: space-between; padding: 9px 0; border-top: 1px dashed var(--sub); }
+.kv { display: flex; justify-content: space-between; padding: 9px 0 4px; }
 .kv__k { color: var(--ink-soft); }
 .kv__v { font-weight: 700; }
+.kv-block { border-top: 1px dashed var(--sub); }
+.kv__desc { margin: 0 0 9px; font-size: 0.82rem; color: var(--ink-soft); text-align: left; }
 
 /* 下タブ */
 .tabbar {
