@@ -5,7 +5,7 @@ import { solarYearOf, solarMonthOf, sexagenaryDayIndex, dayBoard } from '../calc
 import { yearStar, honmeiStar, getsumeiStar, monthBoardCenter, keishaPalace } from '../calc/honmei.js';
 import { placeStars } from '../calc/board.js';
 import { judgeDirections } from '../calc/direction.js';
-import { fortuneOf, fortuneLayers } from '../calc/fortune.js';
+import { fortuneOf, fortuneLayers, doukaiOf } from '../calc/fortune.js';
 import { compatibility } from '../calc/compatibility.js';
 
 export function elementName(star) {
@@ -51,7 +51,8 @@ export function boardModel(date, honmei, period, birth = null) {
     }
     const board = placeStars(center);
     const judged = judgeDirections(board, branch, honmei, breakName);
-    let fortune = fortuneOf(honmei, board);
+    // 同会（五行）は星単独で取れるため常時付与。月命・傾斜は生年月日固有のため birth があるときだけ。
+    let fortune = { ...fortuneOf(honmei, board), doukai: doukaiOf(honmei, board) };
     if (birth && birth.date) {
       const getsumei = getsumeiStar(birth.date);
       const keisha = keishaPalace(honmei, getsumei, birth.sex);

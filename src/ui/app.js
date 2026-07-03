@@ -21,7 +21,8 @@ function todayISO() {
   return `${d.getFullYear()}-${mm}-${dd}`;
 }
 
-const state = { tab: 'today', period: 'day', orient: 'south', targetDate: todayISO(), profile: loadProfile() };
+// viewStar: 今日の運勢で表示する九星。null＝本人の星（effectiveHonmei）。1..9 で他星に切替。
+const state = { tab: 'today', period: 'day', orient: 'south', targetDate: todayISO(), viewStar: null, profile: loadProfile() };
 
 function loadProfile() {
   let raw;
@@ -115,6 +116,13 @@ function periodToggle() {
     .map(([v, l]) => `<button data-period="${v}" aria-pressed="${state.period === v}">${l}</button>`)
     .join('')}</div>`;
 }
+// 今日の運勢を見る九星の切替。current=表示中の星／selfStar=本人の星（紫の目印用）。
+// ラベルは省スペースのため短縮表記（例：二黒）。フル名はバッジ・本文で補う。
+function starSelector(current, selfStar) {
+  return `<div class="star-select">${[1, 2, 3, 4, 5, 6, 7, 8, 9]
+    .map((s) => `<button data-view-star="${s}" aria-pressed="${s === current}"${s === selfStar ? ' data-self="1"' : ''}>${STAR_NAMES[s].slice(0, 2)}</button>`)
+    .join('')}</div>`;
+}
 function orientToggle() {
   const opt = [['south', '南上'], ['north', '北上']];
   return `<div class="toggle">${opt
@@ -141,39 +149,47 @@ function ratingBadge(rating) {
   return `<span class="rating rating--${cls}">${rating}</span>`;
 }
 
-// 運勢の多層ブロック（月命・傾斜・五行＝補助的解釈）。layers が無ければ空文字。
-function layersBlock(layers) {
-  if (!layers) return '';
-  const { element, getsumei, keishaLens, divergence } = layers;
+// 運勢の補助解釈ブロック。同会（五行）は星単独で取れるため常時表示。
+// 月命・傾斜・割れは生年月日固有のため layers があるとき（＝本人の星）だけ表示。
+function insightBlock(doukai, layers) {
   const rows = [];
-  if (element.relation) {
-    rows.push(`<p>${term('同会')}（${element.relation}）：${element.quality}</p>`);
+  if (doukai.relation) {
+    rows.push(`<p>${term('同会')}（${doukai.relation}）：${doukai.quality}</p>`);
   } else {
-    rows.push(`<p>${term('同会')}：${element.quality}</p>`);
+    rows.push(`<p>${term('同会')}：${doukai.quality}</p>`);
   }
-  rows.push(`<p>${term('月命星')}：${getsumei.starName}が${getsumei.palace}に回座／${getsumei.tendency}</p>`);
-  if (keishaLens) {
-    rows.push(`<p>${term('傾斜')}：${keishaLens.note}</p>`);
+  if (layers) {
+    const { getsumei, keishaLens, divergence } = layers;
+    rows.push(`<p>${term('月命星')}：${getsumei.starName}が${getsumei.palace}に回座／${getsumei.tendency}</p>`);
+    if (keishaLens) {
+      rows.push(`<p>${term('傾斜')}：${keishaLens.note}</p>`);
+    }
+    if (divergence.isSplit) {
+      rows.push(`<p class="muted">${divergence.note}</p>`);
+    }
+    rows.push(`<p class="muted">※${term('月命星')}・${term('傾斜')}・${term('同会')}は補助的な読みで、流派により扱いが分かれます。</p>`);
+  } else {
+    rows.push(`<p class="muted">※${term('同会')}は補助的な読みで、流派により扱いが分かれます。</p>`);
   }
-  if (divergence.isSplit) {
-    rows.push(`<p class="muted">${divergence.note}</p>`);
-  }
-  rows.push(`<p class="muted">※${term('月命星')}・${term('傾斜')}・${term('同会')}は補助的な読みで、流派により扱いが分かれます。</p>`);
   return `<div class="layers">${rows.join('')}</div>`;
 }
 
 // ---- 画面：今日（運勢） ----
 function screenToday() {
-  const honmei = effectiveHonmei();
-  if (honmei == null) return needProfile();
+  const selfHonmei = effectiveHonmei();
+  if (selfHonmei == null) return needProfile();
+  const viewStar = state.viewStar ?? selfHonmei; // null＝本人の星
+  const isSelf = viewStar === selfHonmei;
   const p = state.profile;
-  const birth = p.birthDate ? { date: parseDateInput(p.birthDate), sex: p.sex } : null;
-  const m = boardModel(targetDate(), honmei, state.period, birth);
-  // 範囲外等のエラー時もツールバーは残し、日付を選び直せるようにする。
+  // 月命・傾斜は本人の生年月日固有のため、本人の星のときだけ birth を渡す。
+  const birth = isSelf && p.birthDate ? { date: parseDateInput(p.birthDate), sex: p.sex } : null;
+  const m = boardModel(targetDate(), viewStar, state.period, birth);
+  // 範囲外等のエラー時もツールバーは残し、星・日付を選び直せるようにする。
   if (m.error) {
     return `
     <div class="card">
-      <div class="toolbar">${honmeiBadge(honmei)} ${periodToggle()}</div>
+      <div class="toolbar">${starSelector(viewStar, selfHonmei)}</div>
+      <div class="toolbar">${periodToggle()}</div>
       <div class="toolbar">${datePicker()}</div>
       <p class="empty">${m.error}</p>
     </div>`;
@@ -182,15 +198,18 @@ function screenToday() {
   const pos = m.fortune.isClosed
     ? term('八方塞がり')
     : `${DIR_NAMES[m.fortune.dir]}（${m.fortune.palace}）`;
+  // 主語：本人の星なら「本命星」、他星なら星名。
+  const subject = isSelf ? term('本命星') : STAR_NAMES[viewStar];
 
   return `
     <div class="card">
-      <div class="toolbar">${honmeiBadge(honmei)} ${periodToggle()}</div>
+      <div class="toolbar">${starSelector(viewStar, selfHonmei)}</div>
+      <div class="toolbar">${isSelf ? `${honmeiBadge(selfHonmei)} ` : ''}${periodToggle()}</div>
       <div class="toolbar">${datePicker()}</div>
-      <h2 class="card__title">${m.label}の運勢 ${ratingBadge(m.fortune.rating)}</h2>
-      <p>本命星は <b>${pos}</b> に回座しています。</p>
+      <h2 class="card__title">${STAR_NAMES[viewStar]}・${m.label}の運勢 ${ratingBadge(m.fortune.rating)}</h2>
+      <p>${subject}は <b>${pos}</b> に回座しています。</p>
       <div class="tendency">${m.fortune.tendency}</div>
-      ${layersBlock(m.fortune.layers)}
+      ${insightBlock(m.fortune.doukai, m.fortune.layers)}
     </div>
     <div class="card">
       <h2 class="card__title">${term('吉方位')}</h2>
@@ -372,6 +391,9 @@ document.addEventListener('click', (e) => {
   const tab = e.target.closest('[data-tab]');
   if (tab) { state.tab = tab.dataset.tab; render(); return; }
 
+  const vs = e.target.closest('[data-view-star]');
+  if (vs) { state.viewStar = Number(vs.dataset.viewStar); render(); return; }
+
   const per = e.target.closest('[data-period]');
   if (per) { state.period = per.dataset.period; render(); return; }
 
@@ -394,6 +416,7 @@ document.addEventListener('click', (e) => {
     const sex = document.querySelector('input[name="sex"]:checked')?.value || 'female';
     const honmei = birthDate ? safeHonmei(birthDate) : state.profile.honmei;
     saveProfile({ ...state.profile, birthDate, sex, honmei: honmei ?? state.profile.honmei });
+    state.viewStar = null; // 診断し直したら今日の運勢を本人の星に戻す
     render();
     return;
   }

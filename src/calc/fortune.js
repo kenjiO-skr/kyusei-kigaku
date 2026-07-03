@@ -85,17 +85,14 @@ export const KEISHA_LENS = {
 const DIVERGENCE_NOTE =
   '本命（表の運気）と月命（内面・家庭の運気）で向きが分かれています。外向きの動きと内側の整えを切り分けると読み違えにくいとされます。';
 
-// 多層運勢を返す。honmei,getsumei: 1..9 ／ keisha: keishaPalace の戻り（null 可）／ board: placeStars の結果。
-//   { basePolarity, getsumei, keishaLens, element, divergence }
-export function fortuneLayers(honmei, getsumei, keisha, board) {
+// 同会（本命の回座宮の定位星との五行関係）を返す。生年月日を必要とせず星単独で取れる。
+//   { honmeiElement, doukaiStar, doukaiStarName, doukaiElement, relation, quality }
+//   中宮（八方塞がり）のときは同会を取らず relation=null。
+export function doukaiOf(honmei, board) {
   const dir = dirOfStar(board, honmei);
-
-  // 五行（本命の同会）。本命が中宮なら同会は取らず守り。
-  let element;
-  let basePolarity;
   const honmeiElement = ELEMENT_NAMES[STAR_ELEMENT[honmei]];
   if (dir === 'center') {
-    element = {
+    return {
       honmeiElement,
       doukaiStar: null,
       doukaiStarName: null,
@@ -103,20 +100,27 @@ export function fortuneLayers(honmei, getsumei, keisha, board) {
       relation: null,
       quality: ELEMENT_QUALITY_CLOSED,
     };
-    basePolarity = '守り';
-  } else {
-    const doukaiStar = HOME_STAR_BY_DIR[dir];
-    const relation = elementRelation(STAR_ELEMENT[honmei], STAR_ELEMENT[doukaiStar]);
-    element = {
-      honmeiElement,
-      doukaiStar,
-      doukaiStarName: STAR_NAMES[doukaiStar],
-      doukaiElement: ELEMENT_NAMES[STAR_ELEMENT[doukaiStar]],
-      relation,
-      quality: ELEMENT_QUALITY[relation],
-    };
-    basePolarity = POLARITY[relation];
   }
+  const doukaiStar = HOME_STAR_BY_DIR[dir];
+  const relation = elementRelation(STAR_ELEMENT[honmei], STAR_ELEMENT[doukaiStar]);
+  return {
+    honmeiElement,
+    doukaiStar,
+    doukaiStarName: STAR_NAMES[doukaiStar],
+    doukaiElement: ELEMENT_NAMES[STAR_ELEMENT[doukaiStar]],
+    relation,
+    quality: ELEMENT_QUALITY[relation],
+  };
+}
+
+// 多層運勢を返す。honmei,getsumei: 1..9 ／ keisha: keishaPalace の戻り（null 可）／ board: placeStars の結果。
+//   { basePolarity, getsumei, keishaLens, element, divergence }
+export function fortuneLayers(honmei, getsumei, keisha, board) {
+  const dir = dirOfStar(board, honmei);
+
+  // 五行（本命の同会）。本命が中宮なら同会は取らず守り。
+  const element = doukaiOf(honmei, board);
+  const basePolarity = dir === 'center' ? '守り' : POLARITY[element.relation];
 
   // 月命層。
   const gdir = dirOfStar(board, getsumei);
