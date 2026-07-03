@@ -22,7 +22,8 @@ function todayISO() {
 }
 
 // viewStar: 今日の運勢で表示する九星。null＝本人の星（effectiveHonmei）。1..9 で他星に切替。
-const state = { tab: 'today', period: 'day', orient: 'south', targetDate: todayISO(), viewStar: null, profile: loadProfile() };
+// browseAnyway: 未設定のまま「あとで」を選んだときの一時フラグ（非永続）。
+const state = { tab: 'today', period: 'day', orient: 'south', targetDate: todayISO(), viewStar: null, profile: loadProfile(), browseAnyway: false };
 
 function loadProfile() {
   let raw;
@@ -55,6 +56,11 @@ function effectiveHonmei() {
     try { return honmeiStar(d); } catch { return null; }
   }
   return honmei ?? 2;
+}
+
+// セットアップ済みか：生年月日が保存されているかどうかで判定する（既定 honmei では判定しない）。
+function isSetUp() {
+  return !!state.profile.birthDate;
 }
 
 // ---- 日付セレクト（年・月・日） ----
@@ -176,19 +182,23 @@ function insightBlock(doukai, layers) {
 
 // ---- 画面：今日（運勢） ----
 function screenToday() {
+  if (!isSetUp() && !state.browseAnyway) return welcomeCard();
   const selfHonmei = effectiveHonmei();
   if (selfHonmei == null) return needProfile();
   const viewStar = state.viewStar ?? selfHonmei; // null＝本人の星
-  const isSelf = viewStar === selfHonmei;
+  // 未設定でのブラウズ中は誰の星も「本人」扱いしない（本命星バッジ・主語・月命/傾斜を出さない）。
+  const isSelf = isSetUp() && viewStar === selfHonmei;
   const p = state.profile;
   // 月命・傾斜は本人の生年月日固有のため、本人の星のときだけ birth を渡す。
   const birth = isSelf && p.birthDate ? { date: parseDateInput(p.birthDate), sex: p.sex } : null;
   const m = boardModel(targetDate(), viewStar, state.period, birth);
+  // セットアップ済みのときだけ本人星を渡す（未設定でのブラウズ中は紫マークを出さない）。
+  const markStar = isSetUp() ? selfHonmei : null;
   // 範囲外等のエラー時もツールバーは残し、星・日付を選び直せるようにする。
   if (m.error) {
     return `
     <div class="card">
-      <div class="toolbar">${starSelector(viewStar, selfHonmei)}</div>
+      <div class="toolbar">${starSelector(viewStar, markStar)}</div>
       <div class="toolbar">${periodToggle()}</div>
       <div class="toolbar">${datePicker()}</div>
       <p class="empty">${m.error}</p>
@@ -203,7 +213,7 @@ function screenToday() {
 
   return `
     <div class="card">
-      <div class="toolbar">${starSelector(viewStar, selfHonmei)}</div>
+      <div class="toolbar">${starSelector(viewStar, markStar)}</div>
       <div class="toolbar">${isSelf ? `${honmeiBadge(selfHonmei)} ` : ''}${periodToggle()}</div>
       <div class="toolbar">${datePicker()}</div>
       <h2 class="card__title">${STAR_NAMES[viewStar]}・${m.label}の運勢 ${ratingBadge(m.fortune.rating)}</h2>
@@ -221,6 +231,7 @@ function screenToday() {
 
 // ---- 画面：方位盤 ----
 function screenDirections() {
+  if (!isSetUp() && !state.browseAnyway) return welcomeCard();
   const honmei = effectiveHonmei();
   if (honmei == null) return needProfile();
   const m = boardModel(targetDate(), honmei, state.period);
@@ -344,6 +355,30 @@ function needProfile() {
   return `<div class="card"><p class="empty">「本命」タブで生年月日を設定すると、運勢・方位が表示されます。</p></div>`;
 }
 
+// ---- 画面：初回オンボーディング（未設定ユーザー向け） ----
+function welcomeCard() {
+  const p = state.profile;
+  return `
+    <div class="card">
+      <h2 class="card__title">ようこそ</h2>
+      <p>九星気学にもとづく占いです。まず生年月日を設定すると、あなたの本命星の運勢・吉方位が表示されます。</p>
+      <div class="field">
+        <label>生年月日</label>
+        ${dateSelects('birth', '')}
+      </div>
+      <div class="field">
+        <label>性別（${term('傾斜')}の特例判定に使用）</label>
+        <div class="seg">
+          <label><input type="radio" name="sex" value="female" ${p.sex === 'female' ? 'checked' : ''}/> 女性</label>
+          <label><input type="radio" name="sex" value="male" ${p.sex === 'male' ? 'checked' : ''}/> 男性</label>
+        </div>
+      </div>
+      <button class="btn" data-action="save-profile">設定して始める</button>
+      <button class="btn btn--sub" style="margin-top:8px" data-action="browse-anyway">あとで（星を選んで見る）</button>
+      <p class="muted" style="margin-top:8px">生年月日は端末内（localStorage）にのみ保存され、外部に送信されません。</p>
+    </div>`;
+}
+
 // ---- シェル ----
 const SCREENS = { today: screenToday, directions: screenDirections, honmei: screenHonmei, compat: screenCompat };
 
@@ -417,6 +452,13 @@ document.addEventListener('click', (e) => {
     const honmei = birthDate ? safeHonmei(birthDate) : state.profile.honmei;
     saveProfile({ ...state.profile, birthDate, sex, honmei: honmei ?? state.profile.honmei });
     state.viewStar = null; // 診断し直したら今日の運勢を本人の星に戻す
+    state.browseAnyway = false; // 設定完了したのでブラウズフラグは解除
+    render();
+    return;
+  }
+
+  if (e.target.closest('[data-action="browse-anyway"]')) {
+    state.browseAnyway = true;
     render();
     return;
   }
