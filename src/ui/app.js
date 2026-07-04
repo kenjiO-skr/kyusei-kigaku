@@ -113,9 +113,6 @@ function syncDayOptions(el) {
 }
 
 // ---- 共通パーツ ----
-function honmeiBadge(star) {
-  return `<span class="badge-honmei">${term('本命星')}：<span class="badge-honmei__star">${STAR_NAMES[star]}</span></span>`;
-}
 function periodToggle() {
   const opt = [['day', '今日'], ['month', '今月'], ['year', '今年']];
   return `<div class="toggle">${opt
@@ -214,7 +211,7 @@ function screenToday() {
   return `
     <div class="card">
       <div class="toolbar">${starSelector(viewStar, markStar)}</div>
-      <div class="toolbar">${isSelf ? `${honmeiBadge(selfHonmei)} ` : ''}${periodToggle()}</div>
+      <div class="toolbar">${periodToggle()}</div>
       <div class="toolbar">${datePicker()}</div>
       <h2 class="card__title">${STAR_NAMES[viewStar]}・${m.label}の運勢 ${ratingBadge(m.fortune.rating)}</h2>
       <p>${subject}は <b>${pos}</b> に回座しています。</p>
@@ -237,7 +234,6 @@ function screenDirections() {
   const selfHonmei = effectiveHonmei();
   if (selfHonmei == null) return needProfile();
   const viewStar = state.viewStar ?? selfHonmei; // null＝本人の星（今日タブと状態を共有）
-  const isSelf = isSetUp() && viewStar === selfHonmei;
   const markStar = isSetUp() ? selfHonmei : null; // 未設定でのブラウズ中は紫マークを出さない
   // 方位の吉凶は本命殺など星ごとに変わるため、選択中の星で盤を計算する。
   const m = boardModel(targetDate(), viewStar, state.period);
@@ -255,7 +251,7 @@ function screenDirections() {
   return `
     <div class="card">
       <div class="toolbar">${starSelector(viewStar, markStar)}</div>
-      <div class="toolbar">${isSelf ? `${honmeiBadge(selfHonmei)} ` : ''}${periodToggle()} ${orientToggle()}</div>
+      <div class="toolbar">${periodToggle()} ${orientToggle()}</div>
       <div class="toolbar">${datePicker()}</div>
       <h2 class="card__title">${STAR_NAMES[viewStar]}・${m.label}の方位盤</h2>
       ${renderBoard(m, state.orient)}

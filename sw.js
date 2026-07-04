@@ -1,7 +1,7 @@
 // sw.js — service worker（アプリシェルのキャッシュ）。
 // パスはすべて相対：cache.addAll は sw.js の位置（=サブパス scope）を基準に解決される。
 // 出荷物を増やしたらバージョンを上げてキャッシュを更新する。
-const CACHE = 'kyusei-v11';
+const CACHE = 'kyusei-v12';
 
 const ASSETS = [
   './',
