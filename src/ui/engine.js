@@ -58,9 +58,12 @@ export function boardModel(date, honmei, period, birth = null) {
       const keisha = keishaPalace(honmei, getsumei, birth.sex);
       fortune = { ...fortune, layers: fortuneLayers(honmei, getsumei, keisha, board) };
     }
-    const goodDirs = PALACES.filter((d) => judged[d].verdict === '吉').map((d) => DIR_NAMES[d]);
-    const badDirs = PALACES.filter((d) => judged[d].verdict === '凶').map((d) => DIR_NAMES[d]);
-    return { center, board, judged, fortune, breakName, ton, label, goodDirs, badDirs };
+    const dirsBy = (v) => PALACES.filter((d) => judged[d].verdict === v).map((d) => DIR_NAMES[d]);
+    const goodDirs = dirsBy('吉');
+    const neutralDirs = dirsBy('中立');
+    const smallBadDirs = dirsBy('小凶');
+    const badDirs = dirsBy('凶');
+    return { center, board, judged, fortune, breakName, ton, label, goodDirs, neutralDirs, smallBadDirs, badDirs };
   } catch (e) {
     return { error: e instanceof RangeError ? e.message : String(e) };
   }

@@ -224,6 +224,8 @@ function screenToday() {
     <div class="card">
       <h2 class="card__title">${term('吉方位')}</h2>
       <p class="row"><span>吉</span><span class="verdict v-good">${m.goodDirs.join('・') || 'なし'}</span></p>
+      <p class="row"><span>中立</span><span class="verdict v-neutral">${m.neutralDirs.join('・') || 'なし'}</span></p>
+      <p class="row"><span>小凶</span><span class="verdict v-neutral">${m.smallBadDirs.length ? `${m.smallBadDirs.join('・')} ↘` : 'なし'}</span></p>
       <p class="row"><span>凶</span><span class="verdict v-bad">${m.badDirs.join('・') || 'なし'}</span></p>
       ${renderBoard(m, 'south')}
     </div>`;
@@ -232,13 +234,18 @@ function screenToday() {
 // ---- 画面：方位盤 ----
 function screenDirections() {
   if (!isSetUp() && !state.browseAnyway) return welcomeCard();
-  const honmei = effectiveHonmei();
-  if (honmei == null) return needProfile();
-  const m = boardModel(targetDate(), honmei, state.period);
-  // 範囲外等のエラー時もツールバーは残し、日付を選び直せるようにする。
+  const selfHonmei = effectiveHonmei();
+  if (selfHonmei == null) return needProfile();
+  const viewStar = state.viewStar ?? selfHonmei; // null＝本人の星（今日タブと状態を共有）
+  const isSelf = isSetUp() && viewStar === selfHonmei;
+  const markStar = isSetUp() ? selfHonmei : null; // 未設定でのブラウズ中は紫マークを出さない
+  // 方位の吉凶は本命殺など星ごとに変わるため、選択中の星で盤を計算する。
+  const m = boardModel(targetDate(), viewStar, state.period);
+  // 範囲外等のエラー時もツールバーは残し、星・日付を選び直せるようにする。
   if (m.error) {
     return `
     <div class="card">
+      <div class="toolbar">${starSelector(viewStar, markStar)}</div>
       <div class="toolbar">${periodToggle()} ${orientToggle()}</div>
       <div class="toolbar">${datePicker()}</div>
       <p class="empty">${m.error}</p>
@@ -247,9 +254,10 @@ function screenDirections() {
 
   return `
     <div class="card">
-      <div class="toolbar">${periodToggle()} ${orientToggle()}</div>
+      <div class="toolbar">${starSelector(viewStar, markStar)}</div>
+      <div class="toolbar">${isSelf ? `${honmeiBadge(selfHonmei)} ` : ''}${periodToggle()} ${orientToggle()}</div>
       <div class="toolbar">${datePicker()}</div>
-      <h2 class="card__title">${m.label}の方位盤</h2>
+      <h2 class="card__title">${STAR_NAMES[viewStar]}・${m.label}の方位盤</h2>
       ${renderBoard(m, state.orient)}
       <p class="muted" style="margin-top:10px">中宮：${STAR_NAMES[m.center]}${m.ton ? `（${m.ton}）` : ''}</p>
     </div>`;

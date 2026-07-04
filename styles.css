@@ -135,7 +135,8 @@ body {
 .cell--honmei { box-shadow: 0 0 0 3px var(--honmei) inset; }
 .cell__dir { font-size: 0.68rem; color: var(--ink-soft); }
 .cell__star { font-size: 0.82rem; font-weight: 700; margin: 1px 0; }
-.cell__verdict { font-size: 0.68rem; font-weight: 700; }
+.cell__verdict { font-size: 0.82rem; font-weight: 700; }
+.cell__mark { margin-left: 1px; font-size: 0.82rem; }
 .cell__kill { font-size: 0.6rem; line-height: 1.25; }
 .cell__honmei-tag { position: absolute; top: 3px; right: 4px; font-size: 0.6rem; color: var(--honmei); font-weight: 700; }
 .compass { text-align: center; font-size: 0.75rem; color: var(--ink-soft); margin: 2px 0 8px; }

@@ -29,11 +29,13 @@ function cellHtml(dir, model) {
   const kills = j.kills.length
     ? `<span class="cell__kill">${j.kills.map((k) => term(k)).join(' ')}</span>`
     : '';
+  // 中立と小凶は配色規約(§6)で同じグレー。色以外の手がかりとして小凶に下向きマークを添える。
+  const mark = j.verdict === '小凶' ? '<span class="cell__mark" aria-hidden="true">↘</span>' : '';
   return `<div class="cell ${cls.cell}${isHonmei ? ' cell--honmei' : ''}">
     ${isHonmei ? '<span class="cell__honmei-tag">本命</span>' : ''}
     <span class="cell__dir">${DIR_NAMES[dir]}</span>
     <span class="cell__star">${STAR_NAMES[j.star]}</span>
-    <span class="cell__verdict ${cls.badge}">${j.verdict}</span>
+    <span class="cell__verdict ${cls.badge}">${j.verdict}${mark}</span>
     ${kills}
   </div>`;
 }
@@ -48,8 +50,9 @@ export function renderBoard(model, orientation) {
     <div class="board">${cells}</div>
     <div class="legend">
       <span class="lg-good">吉</span>
+      <span class="lg-neutral">中立</span>
+      <span class="lg-neutral">小凶 ↘</span>
       <span class="lg-bad">凶</span>
-      <span class="lg-neutral">小凶・中立</span>
       <span class="lg-honmei">本命星の位置</span>
     </div>`;
 }
