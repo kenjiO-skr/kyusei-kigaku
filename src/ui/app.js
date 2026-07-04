@@ -177,6 +177,15 @@ function insightBlock(doukai, layers) {
   return `<div class="layers">${rows.join('')}</div>`;
 }
 
+// 吉方位の4段階サマリー（吉／中立／小凶／凶）。今日タブ・方位タブで共用し表記を揃える。
+function dirSummary(m) {
+  return `
+      <p class="row"><span>吉</span><span class="verdict v-good">${m.goodDirs.join('・') || 'なし'}</span></p>
+      <p class="row"><span>中立</span><span class="verdict v-neutral">${m.neutralDirs.join('・') || 'なし'}</span></p>
+      <p class="row"><span>小凶</span><span class="verdict v-neutral">${m.smallBadDirs.length ? `${m.smallBadDirs.join('・')} ↘` : 'なし'}</span></p>
+      <p class="row"><span>凶</span><span class="verdict v-bad">${m.badDirs.join('・') || 'なし'}</span></p>`;
+}
+
 // ---- 画面：今日（運勢） ----
 function screenToday() {
   if (!isSetUp() && !state.browseAnyway) return welcomeCard();
@@ -220,11 +229,8 @@ function screenToday() {
     </div>
     <div class="card">
       <h2 class="card__title">${term('吉方位')}</h2>
-      <p class="row"><span>吉</span><span class="verdict v-good">${m.goodDirs.join('・') || 'なし'}</span></p>
-      <p class="row"><span>中立</span><span class="verdict v-neutral">${m.neutralDirs.join('・') || 'なし'}</span></p>
-      <p class="row"><span>小凶</span><span class="verdict v-neutral">${m.smallBadDirs.length ? `${m.smallBadDirs.join('・')} ↘` : 'なし'}</span></p>
-      <p class="row"><span>凶</span><span class="verdict v-bad">${m.badDirs.join('・') || 'なし'}</span></p>
-      ${renderBoard(m, 'south')}
+      ${dirSummary(m)}
+      <p class="muted" style="margin-top:8px">方位盤（南上／北上の切替・中宮）は「方位」タブで見られます。</p>
     </div>`;
 }
 
@@ -254,6 +260,7 @@ function screenDirections() {
       <div class="toolbar">${periodToggle()} ${orientToggle()}</div>
       <div class="toolbar">${datePicker()}</div>
       <h2 class="card__title">${STAR_NAMES[viewStar]}・${m.label}の方位盤</h2>
+      ${dirSummary(m)}
       ${renderBoard(m, state.orient)}
       <p class="muted" style="margin-top:10px">中宮：${STAR_NAMES[m.center]}${m.ton ? `（${m.ton}）` : ''}</p>
     </div>`;
