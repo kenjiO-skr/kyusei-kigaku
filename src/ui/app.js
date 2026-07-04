@@ -336,6 +336,23 @@ function screenCompat() {
     <div id="compat-result"></div>`;
 }
 
+// 相性の総評（関係の種類ごと）。ポップ・断定回避。
+const COMPAT_KIND_TEXT = {
+  相生: '✨ お互いを生かし合える良い相性とされます。「与える側・もらう側」の役割が自然と決まりやすいので、感謝を言葉にすると長続きするそう。',
+  比和: '🌿 同じ気どうしで、安心感のある相性とされます。気楽な半面なあなあになりやすいので、ときどき新しい刺激を入れると新鮮さが続くそう。',
+  相剋: '🔥 刺激し合い、成長を促す関係とされます。ぶつかりやすい半面、違いを認めて距離感を大切にすると、いい緊張感のある関係になるそう。',
+};
+
+// 「self から見た other」の方向性を一言で（relation は self 視点の気）。
+function compatDirLine(relation, self, other) {
+  return {
+    生気: `💞 ${self}は${other}から力や元気をもらい、伸ばしてもらいやすい側とされます。`,
+    退気: `🤲 ${self}は${other}を後押し・お世話する側になりやすいとされます。`,
+    殺気: `⚡ ${self}は${other}から刺激や指摘を受けやすく、良い意味で背筋が伸びるとされます。`,
+    死気: `🍃 ${self}は${other}に気を配り、ややエネルギーを使いやすいとされます。`,
+  }[relation] || '';
+}
+
 function compatResultHtml(birthA, birthB) {
   const da = parseDateInput(birthA);
   const db = parseDateInput(birthB);
@@ -344,11 +361,13 @@ function compatResultHtml(birthA, birthB) {
   try { model = compatModel(da, db); } catch (e) {
     return `<div class="card"><p class="empty">${e instanceof RangeError ? '対応範囲は1950年〜2035年です。' : '日付を確認してください。'}</p></div>`;
   }
-  const text = {
-    相生: 'お互いを生かし合える良い相性とされます。',
-    比和: '同じ五行で、安心感のある相性とされます。',
-    相剋: '刺激し合う関係。距離感を大切にするとよいとされます。',
-  }[model.result.kind];
+  const r = model.result; // あなた(A)→お相手(B)の関係
+  const rev = model.reverse; // お相手(B)→あなた(A)の関係
+  // 比和は両者同じ気なので1文にまとめ、それ以外は与える/もらう等の方向を両視点で示す。
+  const dirBlock = r.kind === '比和'
+    ? '<p>🤝 あなたとお相手は似た気どうし、肩の力を抜いて自然体でいられるとされます。</p>'
+    : `<p>${compatDirLine(r.relation, 'あなた', 'お相手')}</p>
+       <p>${compatDirLine(rev.relation, 'お相手', 'あなた')}</p>`;
   return `
     <div class="card diag">
       <div class="toolbar" style="justify-content:center;gap:16px">
@@ -356,9 +375,10 @@ function compatResultHtml(birthA, birthB) {
         <span style="color:var(--main-deep);font-weight:700">×</span>
         <span class="badge-honmei"><span class="badge-honmei__star">${STAR_NAMES[model.b]}</span></span>
       </div>
-      <div class="diag__main">${term(model.result.kind)}</div>
-      <p>${text}</p>
-      <p class="muted">五行：${model.result.elementA} と ${model.result.elementB}（${model.result.relation}）</p>
+      <div class="diag__main">${term(r.kind)}</div>
+      <p>${COMPAT_KIND_TEXT[r.kind]}</p>
+      ${dirBlock}
+      <p class="muted">五行：あなた ${r.elementA}／お相手 ${r.elementB}（あなたから見て${term(r.relation)}）</p>
     </div>`;
 }
 

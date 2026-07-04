@@ -70,8 +70,10 @@ export function boardModel(date, honmei, period, birth = null) {
 }
 
 // 相性（本命星どうし）。
+//   result＝A(あなた)から見た関係、reverse＝B(お相手)から見た関係。
+//   五行相性は方向で意味が変わる（生気=もらう／退気=与える 等）ため両視点を返す。
 export function compatModel(birthA, birthB) {
   const a = honmeiStar(birthA);
   const b = honmeiStar(birthB);
-  return { a, b, result: compatibility(a, b) };
+  return { a, b, result: compatibility(a, b), reverse: compatibility(b, a) };
 }
