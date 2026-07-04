@@ -69,11 +69,20 @@ export function boardModel(date, honmei, period, birth = null) {
   }
 }
 
-// 相性（本命星どうし）。
+// 相性（本命星＝表の相性／月命星＝内面の相性の2層）。
 //   result＝A(あなた)から見た関係、reverse＝B(お相手)から見た関係。
 //   五行相性は方向で意味が変わる（生気=もらう／退気=与える 等）ため両視点を返す。
+//   月命の相性は本命と同じ五行相性ロジックを月命星ペアに適用するだけ（新規ルールなし）。
 export function compatModel(birthA, birthB) {
   const a = honmeiStar(birthA);
   const b = honmeiStar(birthB);
-  return { a, b, result: compatibility(a, b), reverse: compatibility(b, a) };
+  const ga = getsumeiStar(birthA);
+  const gb = getsumeiStar(birthB);
+  return {
+    a,
+    b,
+    result: compatibility(a, b),
+    reverse: compatibility(b, a),
+    getsumei: { a: ga, b: gb, result: compatibility(ga, gb), reverse: compatibility(gb, ga) },
+  };
 }

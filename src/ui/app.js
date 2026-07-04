@@ -353,6 +353,25 @@ function compatDirLine(relation, self, other) {
   }[relation] || '';
 }
 
+// 相性1ブロック（本命・月命で共用）。withKindText＝総評文の有無（本命=あり／月命=補助で省く）。
+function compatBlock(starA, starB, r, rev, withKindText) {
+  // 比和は両者同じ気なので1文にまとめ、それ以外は与える/もらう等の方向を両視点で示す。
+  const dirBlock = r.kind === '比和'
+    ? '<p>🤝 あなたとお相手は似た気どうし、肩の力を抜いて自然体でいられるとされます。</p>'
+    : `<p>${compatDirLine(r.relation, 'あなた', 'お相手')}</p>
+       <p>${compatDirLine(rev.relation, 'お相手', 'あなた')}</p>`;
+  return `
+      <div class="toolbar" style="justify-content:center;gap:16px">
+        <span class="badge-honmei"><span class="badge-honmei__star">${STAR_NAMES[starA]}</span></span>
+        <span style="color:var(--main-deep);font-weight:700">×</span>
+        <span class="badge-honmei"><span class="badge-honmei__star">${STAR_NAMES[starB]}</span></span>
+      </div>
+      <div class="diag__main">${term(r.kind)}</div>
+      ${withKindText ? `<p>${COMPAT_KIND_TEXT[r.kind]}</p>` : ''}
+      ${dirBlock}
+      <p class="muted">五行：あなた ${r.elementA}／お相手 ${r.elementB}（あなたから見て${term(r.relation)}）</p>`;
+}
+
 function compatResultHtml(birthA, birthB) {
   const da = parseDateInput(birthA);
   const db = parseDateInput(birthB);
@@ -361,24 +380,16 @@ function compatResultHtml(birthA, birthB) {
   try { model = compatModel(da, db); } catch (e) {
     return `<div class="card"><p class="empty">${e instanceof RangeError ? '対応範囲は1950年〜2035年です。' : '日付を確認してください。'}</p></div>`;
   }
-  const r = model.result; // あなた(A)→お相手(B)の関係
-  const rev = model.reverse; // お相手(B)→あなた(A)の関係
-  // 比和は両者同じ気なので1文にまとめ、それ以外は与える/もらう等の方向を両視点で示す。
-  const dirBlock = r.kind === '比和'
-    ? '<p>🤝 あなたとお相手は似た気どうし、肩の力を抜いて自然体でいられるとされます。</p>'
-    : `<p>${compatDirLine(r.relation, 'あなた', 'お相手')}</p>
-       <p>${compatDirLine(rev.relation, 'お相手', 'あなた')}</p>`;
+  const g = model.getsumei;
   return `
     <div class="card diag">
-      <div class="toolbar" style="justify-content:center;gap:16px">
-        <span class="badge-honmei"><span class="badge-honmei__star">${STAR_NAMES[model.a]}</span></span>
-        <span style="color:var(--main-deep);font-weight:700">×</span>
-        <span class="badge-honmei"><span class="badge-honmei__star">${STAR_NAMES[model.b]}</span></span>
-      </div>
-      <div class="diag__main">${term(r.kind)}</div>
-      <p>${COMPAT_KIND_TEXT[r.kind]}</p>
-      ${dirBlock}
-      <p class="muted">五行：あなた ${r.elementA}／お相手 ${r.elementB}（あなたから見て${term(r.relation)}）</p>
+      <h2 class="card__title">${term('本命星')}の相性（基本・表の顔）</h2>
+      ${compatBlock(model.a, model.b, model.result, model.reverse, true)}
+    </div>
+    <div class="card diag">
+      <h2 class="card__title">${term('月命星')}の相性（内面・ふだんの顔）</h2>
+      ${compatBlock(g.a, g.b, g.result, g.reverse, false)}
+      <p class="muted" style="margin-top:8px">※${term('月命星')}は内面や私生活の傾向を補う層で、流派により扱いが分かれます。</p>
     </div>`;
 }
 
